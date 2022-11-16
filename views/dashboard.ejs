@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/styles.css">
+  <!-- external font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/59c032d6c4.js" crossorigin="anonymous"></script>
+  <!-- favicon -->
+  <link rel="shortcut icon" type="image/jpg" href="img/favi.png?v=1"/>
+  <title>AccuDriver Dashboard</title>
+</head>
+<body>
+
+  <nav id="nav">
+    <img src="img/nav.png">
+    <div class="nav-div">
+      <p>Welcome <strong><%= user.userName %></strong>!</p>
+      <a href="/logout">Logout</a>
+      <a href="#help">Help</a>
+    </div>
+  </nav>
+
+  <main class="dashboard-main">
+
+        <!-- Today's Date -->
+        <% var newDate = new Date().toString().slice(0, 10)%>
+
+        <!-- This Week -->
+        <% var todaysDate = new Date()%>
+        <% var weekStartPoint = new Date(todaysDate.setDate(todaysDate.getDate() - 7)) %>
+   
+        
+      <ul class="driver-grid">
+
+        <!-- Each Driver in DB -->
+        <% for(var i=0; i<drivers.length; i++) {%>
+
+          <li>
+            <div class="profile-header">
+              <div></div>
+              <div class="bold"><%= drivers[i].name %></div>
+              <a href="/driver/<%= drivers[i]._id%>"><i class="fa-solid fa-x"></i></a>
+            </div>
+            <img class="driver-img" src="<%= drivers[i].image%>">
+            <div class="profile-headings"><%= newDate %></div>
+
+            <!-- All Starts & Stops Stamps / Day -->
+            <%var startArr = []%>
+            <%var stopArr = []%>
+              
+
+<!-- Multi Start & Stop Stamps/7days -->
+<!-- Ex: [2022-10-17T23:08:21.079Z, 2022-10-17T23:27:23.601Z] -->
+
+<%var startsDuringWeek = [] %>
+<%var stopsDuringWeek = [] %>
+
+<!-- Empty Objs for Starts/Stops  -->
+<!-- Ex: { '17': 2022-10-17T23:27:23.601Z, '18': 2022-10-18T20:53:53.743Z } -->
+<% var startsObj= {}%>
+<% var stopsObj = {}%>
+
+            <div class="times">      
+              <!-- All Starts-->        
+              <div class="starts">
+                <div>Start Stamps</div>
+
+                <!-- Loop thru All Starts -->
+                <% for(var j=0; j<start.length; j++) {%>
+                  <% var startDate = start[j].time.toString().slice(0, 10) %>                  
+                  
+<% var startsWeek = start[j].time%> 
+<!-- Filter Drivers that Match Start / 7 days -->
+<% if (drivers[i]._id == start[j].id && startsWeek >= weekStartPoint) {%>
+  
+  <%startsDuringWeek.push(startsWeek)%>
+
+<%}%>
+
+                <!-- Driver Start Match CONDITIONAL-->
+                  <% if (drivers[i]._id == start[j].id && startDate == newDate) {%>
+                    <% var startTime = start[j].time %>
+                    <% var startHour = start[j].time.getHours() %>
+                    <% var startMin = start[j].time.toString().slice(19, 21) %>
+                    <!-- Push into Arr -->
+                    <% startArr.push(startTime) %>
+                   
+                    <!-- Date Format Change-->
+                    <% if(+startHour < 12) {%>
+                      <% var startStamp = `${startHour}:${startMin} AM`%>
+                    <%}else if(startHour == 12){%>
+                      <% var startStamp = `${startHour}:${startMin} PM`%>
+                    <%}else {%>
+                        <% var startStamp = `${startHour - 12}:${startMin} PM`%>
+                    <%} %>
+
+                    <div><%= startStamp %></div>
+                  
+                  <%} %>
+                <% } %>
+
+<!-- Slicing from "Monday" -->
+<%var indexOfMon = startsDuringWeek.indexOf(startsDuringWeek.find((a) => a.toString().includes('Mon')))%>
+<%var startsFromMonday = startsDuringWeek.slice(indexOfMon, startsDuringWeek.length) %>
+
+
+<!-- Push Start Obj -->
+<%var uniqStartDays = startsFromMonday.map((e)=> e.getDate())%>
+
+<%uniqStartDays.forEach((c) =>  {%>
+  <%!startsObj[c] ? startsObj[c] = startsFromMonday.find((a) => a.getDate() == c) : '' %>
+  <%})%>
+   
+              </div>
+      
+              <!-- All Stops-->
+              <div class="stops">
+                <div>Stop Stamps</div>
+                
+                <!-- Loop thru ALL Stops -->
+                <% for(var q=0; q<stop.length; q++) {%>
+                  <% var stopDate = stop[q].time.toString().slice(0, 10) %>
+
+  <% var stopsWeek = stop[q].time%>
+                  
+<!-- Filter Drivers that Match Stop / 7 days -->
+<% if (drivers[i]._id == stop[q].id && stopsWeek >= weekStartPoint) {%>
+  
+  <%stopsDuringWeek.push(stopsWeek)%>
+    
+<%}%>
+
+                <!-- Driver Stop Match CONDITIONAL-->
+                  <% if (drivers[i]._id == stop[q].id && stopDate == newDate) {%>
+                    <% var stopTime = stop[q].time %>
+                    <% var stopHour = stop[q].time.getHours() %>
+                    <% var stopMin = stop[q].time.toString().slice(19, 21) %>
+
+                    <!-- Push into Arr -->
+                    <% stopArr.push(stop[q].time ) %>                   
+
+                    <!-- Date Format Change -->
+                    <% if(+stopHour < 12) {%>
+                      <% var stopStamp = `${stopHour}:${stopMin} AM`%>
+                    <%}else if(stopHour == 12){%>
+                      <% var stopStamp = `${stopHour}:${stopMin} PM`%>
+                    <%}else {%>
+                        <% var stopStamp = `${stopHour - 12}:${stopMin} PM`%>
+                    <%} %>
+
+                    <div><%= stopStamp %></div>
+
+                  <%} %>
+                <% } %>
+
+<!-- Slicing from "Monday" -->
+<!-- indexOfMon is defined up there^ -->
+<%var stopsFromMonday = stopsDuringWeek.slice(indexOfMon, stopsDuringWeek.length) %>
+<%var indexOfMon = stopsDuringWeek.indexOf(stopsDuringWeek.find((a) => a.toString().includes('Mon')))%>
+
+<!-- Push Stop Obj -->
+
+<%var uniqStopDays = stopsFromMonday.map((e)=> e.getDate())%>
+
+<%uniqStopDays.forEach((c) =>  {%>
+  <%!stopsObj[c] ? stopsObj[c] = stopsFromMonday.reverse().find((a) => a.getDate() == c) : '' %>
+  <%})%>
+                
+              </div>
+
+            </div>
+
+            <div class="driver-btns">
+              <form action="/driver/start/<%= drivers[i]._id%>" method="POST">
+                <button id="start-btn">start</button>
+              </form>
+              <form action="/driver/stop/<%= drivers[i]._id%>" method="POST">
+                <button id="stop-btn">stop</button>
+              </form>
+            </div>
+
+            <!-- Drive Time Left -->
+            <!-- Start & Stop Array Length Equal CONDITIONAL-->
+            <% var response = 0 %>
+            <% if(stopArr.length == startArr.length){ %>
+              <% let elapsedMili = 0 %>
+              <% for(let n=0; n<stopArr.length; n++){ %>
+                <!-- Converstion from Milisecs to Hr : Min Elapsed time -->
+                <% elapsedMili += (stopArr[n] - startArr[n]) %>
+                <% let elapsedMin = Math.floor(elapsedMili/(1000 * 60)) % 60 %>
+                <% let elapsedHr = Math.floor(elapsedMili/(1000 * 60 * 60)) %>
+                <% response = `${elapsedHr}hrs ${elapsedMin}mins / 11hrs `%>
+              <%}%>
+            <%}else{%>
+                <% response = "**Driver is still driving**" %>
+            <%} %>
+
+            <div class="profile-headings">Total Drive Time Today:</div>  
+            <div><%= response %></div>
+   
+<div class="profile-headings">Total Hours This Week:</div>
+<%var endPt = new Date().getDate()%>
+
+<%if (!isNaN(indexOfMon)){%>
+
+<%var strtPt = endPt - 7%>
+<%var totalWeek = 0%>
+
+<!-- Subtract startObj & stopObj = Total Time -->
+    <%for(let h=strtPt; h <= endPt; h++){%>
+    
+      <%!isNaN(stopsObj[h]-startsObj[h]) ? totalWeek += stopsObj[h]-startsObj[h] : ''%>
+      
+    <%}%>
+
+<!-- time Converstion -->
+<% let totalWeekMin = Math.floor(totalWeek/(1000 * 60)) % 60 %>
+<% let totalWeekHr = Math.floor(totalWeek/(1000 * 60 * 60)) %>
+
+<div><%= `${totalWeekHr} hrs ${totalWeekMin} min / 40 hrs`%></div>
+
+<%}else{%>
+<div><%= `0hrs 0mins / 40hrs` %></div>
+<%}%>
+
+
+          </li>
+        <% } %>
+
+        <!-- create driver form -->
+        <li>
+          <div class="bold">Add a Driver</div>
+          <img class="driver-img" src="img/blank.png">
+          <form action="/driver/createDriver" enctype="multipart/form-data" method="POST" class="add-driver">
+            <div class="upload-file">
+             <input type="file" id="imageUpload" name="file">
+            </div>
+
+            <div>
+              <label for="name">Enter name</label>
+               <input type="text" id="name" name="name" class="margin-3">
+            </div>
+            <button type="submit" value="Upload" class="margin-3">Submit</button>
+          </form>
+        </li>
+
+      </ul>
+  </main> 
+  <section id="help">
+<h2>How does it work?</h2>
+<span>Step 1: Add a Driver w/ a photo and name </span>
+<span>Step 2: push start when driver signals they have started to drive</span>
+<span>Step 3: push stop when driver signals they have stopped driving</span>
+<p>To ensure accuracy in Total Weekly Hours, be as accurate a possible and ensure "stop" has been pushed last everyday.</p>
+
+  </section>
+
+  
+  <footer>
+  <a href="#nav"><i class="fa-solid fa-arrow-up"></i></a>
+  <a href="#nav">return to top</a>
+  </footer>
+
+</body>
+</html>
